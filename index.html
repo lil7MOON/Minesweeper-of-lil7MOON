@@ -1,0 +1,2111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>扫雷大冒险 - 10关挑战</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+  #particle-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .bg-animated {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -1;
+    background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #1a1a2e, #16213e, #0f3460);
+    background-size: 400% 400%;
+    animation: gradientBG 20s ease infinite;
+  }
+
+  @keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    padding: 20px;
+    overflow-x: hidden;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ========== 开始页面 ========== */
+  .start-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    position: relative;
+    z-index: 2;
+  }
+
+  .floating-deco {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0.15;
+    font-size: 3rem;
+    animation: floatDeco linear infinite;
+  }
+
+  @keyframes floatDeco {
+    0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.15; }
+    90% { opacity: 0.15; }
+    100% { transform: translateY(-150px) rotate(360deg); opacity: 0; }
+  }
+
+  .start-mine-icon {
+    font-size: 5rem;
+    margin-bottom: 15px;
+    display: inline-block;
+    animation: mineFloat 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(255,100,100,0.5));
+  }
+
+  @keyframes mineFloat {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-15px) rotate(3deg); }
+  }
+
+  .start-title {
+    font-size: 4.5rem;
+    font-weight: 900;
+    margin-bottom: 5px;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ffd93d 25%, #6bcf7f 50%, #4ecdc4 75%, #a78bfa 100%);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientText 4s ease infinite, titleGlow 2s ease-in-out infinite;
+    text-align: center;
+    letter-spacing: 3px;
+  }
+
+  @keyframes gradientText {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes titleGlow {
+    0%, 100% { filter: drop-shadow(0 0 15px rgba(255,107,107,0.4)); }
+    50% { filter: drop-shadow(0 0 30px rgba(255,217,61,0.5)); }
+  }
+
+  .start-subtitle {
+    font-size: 1.2rem;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 40px;
+    letter-spacing: 5px;
+    animation: subtitleFade 0.8s ease 0.5s both;
+  }
+
+  @keyframes subtitleFade {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 0.7; transform: translateY(0); }
+  }
+
+  .slogan-container {
+    text-align: center;
+    margin-bottom: 40px;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    animation: subtitleFade 0.8s ease 0.5s both;
+  }
+
+  .slogan-text {
+    font-size: 1.4rem;
+    color: rgba(255,255,255,0.85);
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(255,255,255,0.2);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    max-width: 500px;
+    line-height: 1.6;
+  }
+
+  .slogan-text.fade-out {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  .slogan-text.fade-in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .slogan-dots {
+    display: flex;
+    gap: 8px;
+    margin-top: 18px;
+    justify-content: center;
+  }
+
+  .slogan-dots .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .slogan-dots .dot.active {
+    background: rgba(255,255,255,0.7);
+    transform: scale(1.4);
+    box-shadow: 0 0 10px rgba(255,255,255,0.4);
+  }
+
+  .start-btn-wrapper {
+    position: relative;
+    margin-bottom: 30px;
+    animation: btnEnter 0.6s ease 1.1s both;
+  }
+
+  @keyframes btnEnter {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .start-btn {
+    padding: 20px 70px;
+    font-size: 1.6rem;
+    font-weight: bold;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 8px 30px rgba(238,90,36,0.5);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 3px;
+    z-index: 1;
+  }
+
+  .start-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.6s ease;
+    z-index: -1;
+  }
+
+  .start-btn:hover::before { left: 100%; }
+
+  .start-btn:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 15px 45px rgba(238,90,36,0.6);
+  }
+
+  .start-btn:active { transform: scale(0.98); }
+
+  .start-btn-glow {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%; height: 100%;
+    border-radius: 50px;
+    background: radial-gradient(circle, rgba(255,107,107,0.4) 0%, transparent 70%);
+    animation: btnPulse 2s ease-in-out infinite;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  @keyframes btnPulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+    50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.2; }
+  }
+
+  .start-stats {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.95rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    animation: subtitleFade 0.8s ease 1.3s both;
+  }
+
+  .start-stats span {
+    font-weight: bold;
+    color: #ffd700;
+    font-size: 1.1rem;
+  }
+
+  .rules-btn {
+    padding: 12px 30px;
+    font-size: 1rem;
+    font-weight: bold;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.8);
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 5px;
+    animation: subtitleFade 0.8s ease 1.5s both;
+  }
+
+  .rules-btn:hover {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.05);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    border-color: rgba(255,255,255,0.3);
+    color: white;
+  }
+
+  .start-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .audio-btn {
+    padding: 12px 22px;
+    font-size: 1rem;
+    font-weight: bold;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.8);
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+    animation: subtitleFade 0.8s ease 1.5s both;
+  }
+
+  .audio-btn:hover {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.05);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    border-color: rgba(255,255,255,0.3);
+    color: white;
+  }
+
+  .audio-btn.muted {
+    color: rgba(255,255,255,0.4);
+    opacity: 0.6;
+  }
+
+  /* ========== 游戏规则弹窗 ========== */
+  .rules-modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .rules-modal.show {
+    display: flex;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .rules-card {
+    background: linear-gradient(145deg, #2a2a3e, #1e1e2e);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 85vh;
+    overflow: hidden;
+    box-shadow: 0 25px 70px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1);
+    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .rules-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    background: rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .rules-header h2 {
+    font-size: 1.5rem;
+    color: white;
+    margin: 0;
+  }
+
+  .rules-close {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: rgba(255,255,255,0.6);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .rules-close:hover {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    transform: rotate(90deg);
+  }
+
+  .rules-content {
+    padding: 20px 25px;
+    overflow-y: auto;
+    max-height: 60vh;
+  }
+
+  .rules-section {
+    margin-bottom: 20px;
+  }
+
+  .rules-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .rules-section h3 {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .rules-section p {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .rules-section ul {
+    margin: 0;
+    padding-left: 20px;
+  }
+
+  .rules-section li {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.95rem;
+    line-height: 1.8;
+    margin-bottom: 5px;
+  }
+
+  .rules-section li:last-child {
+    margin-bottom: 0;
+  }
+
+  .rule-key {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.9);
+    margin-right: 5px;
+  }
+
+  .rules-numbers {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .num-box {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #252535;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  .rules-footer {
+    padding: 15px 25px;
+    background: rgba(255,255,255,0.05);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    justify-content: center;
+  }
+
+  .rules-confirm {
+    padding: 12px 40px;
+    font-size: 1rem;
+    font-weight: bold;
+    background: linear-gradient(135deg, #4ecdc4, #44a08d);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .rules-confirm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(78,205,196,0.4);
+  }
+
+  /* ========== 游戏页面 ========== */
+  .game-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+  }
+
+  .game-screen.active {
+    display: flex;
+    animation: screenSlideIn 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
+  }
+
+  @keyframes screenSlideIn {
+    from { opacity: 0; transform: scale(0.95) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .back-btn {
+    position: fixed;
+    top: 20px; left: 20px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: bold;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 50;
+  }
+
+  .back-btn:hover {
+    background: rgba(255,255,255,0.25);
+    transform: translateX(-3px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  }
+
+  .game-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  .game-title {
+    color: white;
+    font-size: 1.8rem;
+    text-shadow: 0 0 20px rgba(255,255,255,0.3);
+    margin-bottom: 8px;
+  }
+
+  .level-info {
+    color: white;
+    font-size: 1.05rem;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    padding: 8px 25px;
+    border-radius: 25px;
+    border: 1px solid rgba(255,255,255,0.15);
+    margin-bottom: 10px;
+  }
+
+  .progress-bar-container {
+    width: 280px;
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #4ecdc4, #44a08d);
+    border-radius: 10px;
+    transition: width 0.4s ease;
+    box-shadow: 0 0 10px rgba(78,205,196,0.5);
+  }
+
+  .level-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 600px;
+  }
+
+  .level-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 14px;
+    font-weight: bold;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .level-btn:hover:not(.locked) {
+    background: rgba(255,255,255,0.25);
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  }
+
+  .level-btn.active {
+    background: rgba(255,255,255,0.35);
+    color: #fff;
+    transform: scale(1.15);
+    box-shadow: 0 4px 20px rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.4);
+  }
+
+  .level-btn.locked {
+    opacity: 0.35;
+    cursor: not-allowed;
+    filter: grayscale(0.5);
+  }
+
+  .level-btn.locked::before {
+    content: "🔒";
+    position: absolute;
+    font-size: 16px;
+  }
+
+  .level-btn.locked span { visibility: hidden; }
+
+  .star-row {
+    position: absolute;
+    bottom: -13px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 1px;
+    font-size: 9px;
+  }
+
+  .star-row .star { color: #ffd700; text-shadow: 0 0 3px rgba(255,215,0,0.5); }
+  .star-row .star.empty { color: rgba(255,255,255,0.2); }
+
+  .power-ups {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .power-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: bold;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .power-btn:hover:not(:disabled) {
+    background: rgba(255,255,255,0.25);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  }
+
+  .power-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .power-btn .count {
+    display: inline-block;
+    background: rgba(255,255,255,0.25);
+    padding: 2px 10px;
+    border-radius: 10px;
+    margin-left: 6px;
+    font-size: 12px;
+  }
+
+  .game-container {
+    background: #2a2a3e;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+  }
+
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 12px;
+    background: #1e1e2e;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .counter {
+    background: #000;
+    color: #ff4444;
+    font-family: 'Courier New', monospace;
+    font-size: 28px;
+    font-weight: bold;
+    padding: 6px 12px;
+    min-width: 80px;
+    text-align: center;
+    border-radius: 6px;
+    border: 1px solid rgba(255,68,68,0.2);
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(255,68,68,0.6);
+  }
+
+  .face-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 28px;
+    background: #2a2a3e;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .face-btn:hover {
+    background: #363650;
+    transform: scale(1.1);
+  }
+
+  .face-btn:active { transform: scale(0.92); }
+
+  .board {
+    display: grid;
+    gap: 0;
+    border: 2px solid rgba(255,255,255,0.1);
+    background: #1e1e2e;
+    border-radius: 6px;
+    max-height: 62vh;
+    overflow: auto;
+    padding: 2px;
+  }
+
+  .cell {
+    width: 28px;
+    height: 28px;
+    background: #3a3a52;
+    border: 2px solid;
+    border-color: #4a4a6a #2a2a3e #2a2a3e #4a4a6a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    flex-shrink: 0;
+    transition: background 0.15s;
+    animation: cellAppear 0.3s ease both;
+  }
+
+  @keyframes cellAppear {
+    from { opacity: 0; transform: scale(0); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .cell:hover:not(.revealed):not(.flagged) {
+    background: #4a4a6a;
+  }
+
+  .cell.revealed {
+    border: 1px solid rgba(255,255,255,0.05);
+    background: #252535;
+    cursor: default;
+    animation: revealPop 0.25s ease;
+  }
+
+  @keyframes revealPop {
+    0% { transform: scale(0.7); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  .cell.hint-flash {
+    animation: hintFlash 0.8s ease-in-out 3;
+  }
+
+  @keyframes hintFlash {
+    0%, 100% { background: #3a3a52; }
+    50% { background: #ffeb3b; box-shadow: inset 0 0 15px #ffc107, 0 0 20px rgba(255,235,59,0.5); }
+  }
+
+  .cell.mine { background: #ff3333; }
+
+  .cell.flagged::before { content: "🚩"; font-size: 14px; }
+  .cell.mine-icon::before { content: "💣"; font-size: 14px; }
+  .cell.wrong-flag::before { content: "❌"; font-size: 14px; }
+
+  .num-1 { color: #4dabf7; text-shadow: 0 0 8px rgba(77,171,247,0.4); }
+  .num-2 { color: #51cf66; text-shadow: 0 0 8px rgba(81,207,102,0.4); }
+  .num-3 { color: #ff6b6b; text-shadow: 0 0 8px rgba(255,107,107,0.4); }
+  .num-4 { color: #845ef7; text-shadow: 0 0 8px rgba(132,94,247,0.4); }
+  .num-5 { color: #ff922b; text-shadow: 0 0 8px rgba(255,146,43,0.4); }
+  .num-6 { color: #20c997; text-shadow: 0 0 8px rgba(32,201,151,0.4); }
+  .num-7 { color: #f06595; text-shadow: 0 0 8px rgba(240,101,149,0.4); }
+  .num-8 { color: #adb5bd; text-shadow: 0 0 8px rgba(173,181,189,0.4); }
+
+  .instructions {
+    color: rgba(255,255,255,0.5);
+    margin-top: 12px;
+    font-size: 13px;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .next-level-btn {
+    margin-top: 15px;
+    padding: 14px 35px;
+    font-size: 16px;
+    font-weight: bold;
+    background: linear-gradient(135deg, #4ecdc4, #44a08d);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 6px 25px rgba(78,205,196,0.4);
+    transition: all 0.3s;
+    display: none;
+  }
+
+  .next-level-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 35px rgba(78,205,196,0.5);
+  }
+
+  .next-level-btn.show {
+    display: block;
+    animation: btnPulse2 1.5s ease-in-out infinite;
+  }
+
+  @keyframes btnPulse2 {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  /* 屏幕震动 */
+  .shake {
+    animation: shake 0.5s ease;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px) translateY(-2px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px) translateY(2px); }
+  }
+
+  /* ========== 结果弹窗 ========== */
+  .result-modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .result-modal.show {
+    display: flex;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .result-card {
+    background: linear-gradient(145deg, #2a2a3e, #1e1e2e);
+    padding: 35px 45px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 25px 70px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1);
+    animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    max-width: 380px;
+    width: 90%;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  @keyframes popIn {
+    0% { transform: scale(0.5) rotate(-5deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  .result-card h2 {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+    color: white;
+  }
+
+  .result-card .stars {
+    font-size: 3.5rem;
+    margin: 15px 0;
+    letter-spacing: 8px;
+  }
+
+  .result-card .stars .star {
+    display: inline-block;
+    animation: starPop 0.5s ease forwards;
+    opacity: 0;
+    transform: scale(0);
+  }
+
+  .result-card .stars .star:nth-child(1) { animation-delay: 0.2s; }
+  .result-card .stars .star:nth-child(2) { animation-delay: 0.4s; }
+  .result-card .stars .star:nth-child(3) { animation-delay: 0.6s; }
+
+  @keyframes starPop {
+    0% { opacity: 0; transform: scale(0) rotate(-180deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  }
+
+  .result-card .stars .star.gold { color: #ffd700; text-shadow: 0 0 15px rgba(255,215,0,0.6); }
+  .result-card .stars .star.gray { color: #444; }
+
+  .result-card .time-text {
+    font-size: 1.2rem;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 5px;
+  }
+
+  .result-card .target-text {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 20px;
+  }
+
+  .result-card .btn-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .result-card button {
+    padding: 12px 26px;
+    font-size: 14px;
+    font-weight: bold;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .result-card .btn-retry {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .result-card .btn-next {
+    background: linear-gradient(135deg, #4ecdc4, #44a08d);
+    color: white;
+  }
+
+  .result-card button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  }
+
+  .cell.undo-flash {
+    animation: undoFlash 0.5s ease;
+  }
+
+  @keyframes undoFlash {
+    0% { background: #51cf66; }
+    100% { background: #252535; }
+  }
+
+  /* 烟花效果容器 */
+  #fireworks-container {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 99;
+  }
+</style>
+</head>
+<body>
+  <div class="bg-animated"></div>
+  <canvas id="particle-canvas"></canvas>
+  <div id="fireworks-container"></div>
+
+  <!-- 开始页面 -->
+  <div class="start-screen" id="start-screen">
+    <div class="start-mine-icon">💣</div>
+    <h1 class="start-title">扫雷大冒险</h1>
+    <p class="start-subtitle">经典玩法 · 十关挑战 · 星级评分</p>
+
+    <div class="slogan-container">
+      <div class="slogan-text" id="slogan-text">每一步都是抉择，每一格都是挑战</div>
+      <div class="slogan-dots" id="slogan-dots"></div>
+    </div>
+
+    <div class="start-btn-wrapper">
+      <div class="start-btn-glow"></div>
+      <button class="start-btn" id="start-btn">开始游戏</button>
+    </div>
+
+    <p class="start-stats" id="start-stats">已解锁 <span>1</span> 关 · 共获得 <span>0</span> 颗星</p>
+    
+    <div class="start-actions">
+      <button class="rules-btn" id="rules-btn">📖 游戏规则</button>
+      <button class="audio-btn" id="audio-toggle" title="开启/关闭音效">🔊 音效</button>
+    </div>
+  </div>
+  
+  <!-- 游戏规则弹窗 -->
+  <div class="rules-modal" id="rules-modal">
+    <div class="rules-card">
+      <div class="rules-header">
+        <h2>📖 游戏规则</h2>
+        <button class="rules-close" id="rules-close">✕</button>
+      </div>
+      <div class="rules-content">
+        <div class="rules-section">
+          <h3>🎮 基础操作</h3>
+          <ul>
+            <li><span class="rule-key">左键点击</span> 揭开格子</li>
+            <li><span class="rule-key">右键点击</span> 插上/移除旗子标记地雷</li>
+            <li><span class="rule-key">点击笑脸</span> 重新开始当前关卡</li>
+            <li><span class="rule-key">和弦点击</span> 当数字周围的旗子数等于数字时，点击数字可快速揭开剩余格子</li>
+          </ul>
+        </div>
+        <div class="rules-section">
+          <h3>🔢 数字含义</h3>
+          <p>揭开的格子显示的数字，表示周围8个格子中地雷的数量</p>
+          <div class="rules-numbers">
+            <span class="num-box num-1">1</span>
+            <span class="num-box num-2">2</span>
+            <span class="num-box num-3">3</span>
+            <span class="num-box num-4">4</span>
+            <span class="num-box num-5">5</span>
+            <span class="num-box num-6">6</span>
+            <span class="num-box num-7">7</span>
+            <span class="num-box num-8">8</span>
+          </div>
+        </div>
+        <div class="rules-section">
+          <h3>🎯 游戏目标</h3>
+          <ul>
+            <li>揭开所有非地雷的格子即可通关</li>
+            <li>踩到地雷则游戏失败</li>
+            <li>首次点击保证安全，不会踩到地雷</li>
+          </ul>
+        </div>
+        <div class="rules-section">
+          <h3>⭐ 星级评分</h3>
+          <ul>
+            <li>⏱️ 根据通关时间评定星级</li>
+            <li>⭐⭐⭐ 三星：在最短时间内通关</li>
+            <li>⭐⭐ 二星：在中等时间内通关</li>
+            <li>⭐ 一星：通关即可获得</li>
+          </ul>
+        </div>
+        <div class="rules-section">
+          <h3>💡 道具辅助</h3>
+          <ul>
+            <li>↩️ <span class="rule-key">撤回</span>：撤销上一步操作（每关3次）</li>
+            <li>💡 <span class="rule-key">提示</span>：高亮显示一个安全格子（每关3次）</li>
+          </ul>
+        </div>
+        <div class="rules-section">
+          <h3>🔒 关卡解锁</h3>
+          <p>完成当前关卡后自动解锁下一关，共10关，难度递增</p>
+        </div>
+      </div>
+      <div class="rules-footer">
+        <button class="rules-confirm" id="rules-confirm">知道了！</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 游戏页面 -->
+  <div class="game-screen" id="game-screen">
+    <button class="back-btn" id="back-btn">← 返回主页</button>
+
+    <div class="game-header">
+      <div class="game-title">💣 扫雷大冒险</div>
+      <div class="level-info" id="level-info">第 1 关</div>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+    </div>
+
+    <div class="level-selector" id="level-selector"></div>
+
+    <div class="power-ups">
+      <button class="power-btn" id="undo-btn" disabled>
+        ↩️ 撤回 <span class="count" id="undo-count">3</span>
+      </button>
+      <button class="power-btn" id="hint-btn" disabled>
+        💡 提示 <span class="count" id="hint-count">3</span>
+      </button>
+    </div>
+
+    <div class="game-container" id="game-container">
+      <div class="controls">
+        <div class="counter" id="mine-counter">008</div>
+        <button class="face-btn" id="face-btn">🙂</button>
+        <div class="counter" id="timer">000</div>
+      </div>
+      <div class="board" id="board"></div>
+    </div>
+
+    <button class="next-level-btn" id="next-level-btn">🎉 下一关 →</button>
+
+    <p class="instructions">
+      左键揭开格子 | 右键插旗标记 | 点击笑脸重新开始<br>
+      每关有 3 次撤回和 3 次提示机会 | 通关越快星星越多
+    </p>
+  </div>
+
+  <!-- 结果弹窗 -->
+  <div class="result-modal" id="result-modal">
+    <div class="result-card">
+      <h2 id="result-title">🎉 恭喜过关！</h2>
+      <div class="stars" id="result-stars"></div>
+      <div class="time-text" id="result-time">用时: 30 秒</div>
+      <div class="target-text" id="result-target">三星目标: 60秒内</div>
+      <div class="btn-group">
+        <button class="btn-retry" id="btn-retry">🔄 重玩</button>
+        <button class="btn-next" id="btn-next">➡️ 下一关</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const LEVELS = [
+  { rows: 8, cols: 8, mines: 8, name: "新手入门", threeStar: 30, twoStar: 60 },
+  { rows: 9, cols: 9, mines: 10, name: "初级挑战", threeStar: 45, twoStar: 90 },
+  { rows: 10, cols: 10, mines: 14, name: "渐入佳境", threeStar: 60, twoStar: 120 },
+  { rows: 11, cols: 11, mines: 18, name: "步步为营", threeStar: 80, twoStar: 160 },
+  { rows: 12, cols: 12, mines: 24, name: "小心陷阱", threeStar: 100, twoStar: 200 },
+  { rows: 14, cols: 14, mines: 32, name: "中级考验", threeStar: 140, twoStar: 280 },
+  { rows: 16, cols: 16, mines: 42, name: "高手之路", threeStar: 180, twoStar: 360 },
+  { rows: 18, cols: 18, mines: 58, name: "危机四伏", threeStar: 240, twoStar: 480 },
+  { rows: 20, cols: 20, mines: 75, name: "专家挑战", threeStar: 300, twoStar: 600 },
+  { rows: 22, cols: 22, mines: 99, name: "终极魔王", threeStar: 400, twoStar: 800 }
+];
+
+const MAX_UNDO = 3;
+const MAX_HINT = 3;
+
+let currentLevelIndex = 0;
+let unlockedLevel = 0;
+let levelStars = {};
+let board = [];
+let revealed = [];
+let flagged = [];
+let gameOver = false;
+let gameWon = false;
+let firstClick = true;
+let timer = 0;
+let timerInterval = null;
+let minesLeft = 0;
+let undoCount = 0;
+let hintCount = 0;
+let history = [];
+
+const boardEl = document.getElementById('board');
+const mineCounterEl = document.getElementById('mine-counter');
+const timerEl = document.getElementById('timer');
+const faceBtn = document.getElementById('face-btn');
+const levelInfoEl = document.getElementById('level-info');
+const levelSelectorEl = document.getElementById('level-selector');
+const nextLevelBtn = document.getElementById('next-level-btn');
+const undoBtn = document.getElementById('undo-btn');
+const hintBtn = document.getElementById('hint-btn');
+const undoCountEl = document.getElementById('undo-count');
+const hintCountEl = document.getElementById('hint-count');
+const resultModal = document.getElementById('result-modal');
+const resultTitle = document.getElementById('result-title');
+const resultStars = document.getElementById('result-stars');
+const resultTime = document.getElementById('result-time');
+const resultTarget = document.getElementById('result-target');
+const btnRetry = document.getElementById('btn-retry');
+const btnNext = document.getElementById('btn-next');
+const progressBar = document.getElementById('progress-bar');
+const gameContainer = document.getElementById('game-container');
+const fireworksContainer = document.getElementById('fireworks-container');
+
+// ========== 粒子系统 ==========
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function initParticles() {
+  particles = [];
+  const count = Math.min(80, Math.floor(window.innerWidth / 20));
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      size: Math.random() * 2 + 0.5,
+      opacity: Math.random() * 0.5 + 0.1,
+      hue: Math.random() * 360
+    });
+  }
+}
+initParticles();
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    if (p.x < 0) p.x = canvas.width;
+    if (p.x > canvas.width) p.x = 0;
+    if (p.y < 0) p.y = canvas.height;
+    if (p.y > canvas.height) p.y = 0;
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${p.hue}, 70%, 65%, ${p.opacity})`;
+    ctx.shadowBlur = p.size * 3;
+    ctx.shadowColor = `hsla(${p.hue}, 70%, 65%, ${p.opacity})`;
+    ctx.fill();
+  });
+  ctx.shadowBlur = 0;
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// ========== 激励标语轮播 ==========
+const SLOGANS = [
+  "每一步都是抉择，每一格都是挑战",
+  "勇者无惧，智者无敌",
+  "小心驶得万年船，大胆方能破难关",
+  "你离通关，只差一次点击",
+  "地雷藏于暗处，胜利属于勇者",
+  "智者千虑必有一得，扫雷千局必有一胜"
+];
+
+let currentSloganIndex = 0;
+let sloganInterval = null;
+const sloganTextEl = document.getElementById('slogan-text');
+const sloganDotsEl = document.getElementById('slogan-dots');
+
+function buildSloganDots() {
+  sloganDotsEl.innerHTML = '';
+  for (let i = 0; i < SLOGANS.length; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === currentSloganIndex ? ' active' : '');
+    dot.addEventListener('click', () => {
+      currentSloganIndex = i;
+      showSlogan();
+      resetSloganInterval();
+    });
+    sloganDotsEl.appendChild(dot);
+  }
+}
+
+function showSlogan() {
+  sloganTextEl.classList.add('fade-out');
+  setTimeout(() => {
+    sloganTextEl.textContent = SLOGANS[currentSloganIndex];
+    sloganTextEl.classList.remove('fade-out');
+    sloganTextEl.classList.add('fade-in');
+    const dots = sloganDotsEl.querySelectorAll('.dot');
+    dots.forEach((d, i) => d.classList.toggle('active', i === currentSloganIndex));
+  }, 500);
+}
+
+function nextSlogan() {
+  currentSloganIndex = (currentSloganIndex + 1) % SLOGANS.length;
+  showSlogan();
+}
+
+function resetSloganInterval() {
+  if (sloganInterval) clearInterval(sloganInterval);
+  sloganInterval = setInterval(nextSlogan, 4000);
+}
+
+function startSloganCarousel() {
+  buildSloganDots();
+  resetSloganInterval();
+}
+
+// ========== 音效系统（Web Audio API） ==========
+let audioCtx = null;
+let audioEnabled = true;
+try {
+  audioEnabled = localStorage.getItem('minesweeper_audio') !== 'off';
+} catch(e) {}
+
+function ensureAudio() {
+  if (!audioCtx) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e) {
+      audioEnabled = false;
+    }
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+
+function playTone(freq, duration, type = 'sine', volume = 0.2, delay = 0) {
+  if (!audioEnabled) return;
+  ensureAudio();
+  if (!audioCtx) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const start = audioCtx.currentTime + delay;
+    const end = start + duration;
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(volume, start + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, end);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(start);
+    osc.stop(end + 0.01);
+  } catch(e) {}
+}
+
+function playMelody(notes) {
+  if (!audioEnabled) return;
+  notes.forEach(([freq, duration, type, volume]) => {
+    playTone(freq, duration, type, volume || 0.2);
+  });
+}
+
+// 各种游戏音效
+const SOUNDS = {
+  click: () => playTone(800, 0.05, 'square', 0.1),
+  reveal: () => playTone(600, 0.08, 'sine', 0.15),
+  revealMulti: () => playMelody([[400, 0.05, 'sine', 0.1], [500, 0.05, 'sine', 0.1], [600, 0.06, 'sine', 0.12]]),
+  flag: () => playMelody([[700, 0.05, 'square', 0.15], [900, 0.08, 'square', 0.15]]),
+  unflag: () => playMelody([[600, 0.06, 'square', 0.12], [400, 0.05, 'square', 0.1]]),
+  hint: () => playMelody([[523, 0.06, 'sine', 0.15], [659, 0.08, 'sine', 0.18]]),
+  undo: () => playTone(440, 0.1, 'triangle', 0.18),
+  explode: () => {
+    if (!audioEnabled) return;
+    playTone(120, 0.4, 'sawtooth', 0.3, 0);
+    playTone(80, 0.5, 'square', 0.2, 0.05);
+    playTone(60, 0.6, 'sawtooth', 0.15, 0.1);
+  },
+  win: () => {
+    if (!audioEnabled) return;
+    const notes = [
+      [523, 0.1, 'sine', 0.2],
+      [659, 0.1, 'sine', 0.2],
+      [784, 0.1, 'sine', 0.2],
+      [1047, 0.2, 'sine', 0.25],
+      [784, 0.1, 'sine', 0.18, 0.25],
+      [1047, 0.3, 'sine', 0.3, 0.3]
+    ];
+    notes.forEach(([f, d, t, v]) => playTone(f, d, t, v));
+  },
+  lose: () => {
+    if (!audioEnabled) return;
+    const notes = [
+      [400, 0.15, 'sawtooth', 0.2],
+      [350, 0.15, 'sawtooth', 0.2, 0.1],
+      [300, 0.2, 'sawtooth', 0.22, 0.2],
+      [200, 0.4, 'sawtooth', 0.25, 0.3]
+    ];
+    notes.forEach(([f, d, t, v]) => playTone(f, d, t, v));
+  },
+  start: () => {
+    if (!audioEnabled) return;
+    const notes = [
+      [440, 0.08, 'sine', 0.2],
+      [554, 0.08, 'sine', 0.2, 0.06],
+      [659, 0.08, 'sine', 0.2, 0.12],
+      [880, 0.15, 'sine', 0.25, 0.18]
+    ];
+    notes.forEach(([f, d, t, v]) => playTone(f, d, t, v));
+  },
+  next: () => {
+    if (!audioEnabled) return;
+    const notes = [
+      [523, 0.08, 'triangle', 0.18],
+      [659, 0.08, 'triangle', 0.18, 0.06],
+      [784, 0.12, 'triangle', 0.2, 0.12]
+    ];
+    notes.forEach(([f, d, t, v]) => playTone(f, d, t, v));
+  },
+  hover: () => playTone(1200, 0.02, 'sine', 0.05)
+};
+
+// ========== 开始页面浮动装饰 ==========
+function createFloatingDecos() {
+  const startScreen = document.getElementById('start-screen');
+  const decos = ['💣', '🚩', '⭐', '💎', '🔥', '⚡'];
+  for (let i = 0; i < 12; i++) {
+    const deco = document.createElement('div');
+    deco.className = 'floating-deco';
+    deco.textContent = decos[Math.floor(Math.random() * decos.length)];
+    deco.style.left = Math.random() * 100 + '%';
+    deco.style.fontSize = (Math.random() * 2 + 1.5) + 'rem';
+    deco.style.animationDuration = (Math.random() * 15 + 15) + 's';
+    deco.style.animationDelay = (Math.random() * 15) + 's';
+    startScreen.appendChild(deco);
+  }
+}
+
+// ========== 烟花效果 ==========
+function createFireworks() {
+  const colors = ['#ff6b6b', '#ffd93d', '#6bcf7f', '#4ecdc4', '#a78bfa', '#ff922b'];
+  for (let i = 0; i < 30; i++) {
+    setTimeout(() => {
+      const firework = document.createElement('div');
+      firework.style.cssText = `
+        position: absolute;
+        left: ${Math.random() * 100}%;
+        top: ${Math.random() * 60 + 10}%;
+        font-size: ${Math.random() * 1 + 1}rem;
+        color: ${colors[Math.floor(Math.random() * colors.length)]};
+        text-shadow: 0 0 15px currentColor;
+        pointer-events: none;
+        animation: fireworkBurst 1.5s ease-out forwards;
+      `;
+      firework.textContent = ['✨', '🎉', '⭐', '💫', '🎊'][Math.floor(Math.random() * 5)];
+      fireworksContainer.appendChild(firework);
+      setTimeout(() => firework.remove(), 1500);
+    }, i * 60);
+  }
+
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fireworkBurst {
+      0% { transform: scale(0) translateY(0); opacity: 1; }
+      50% { transform: scale(1.5) translateY(-30px); opacity: 1; }
+      100% { transform: scale(0.5) translateY(-80px); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
+  setTimeout(() => style.remove(), 2500);
+}
+
+// ========== 存档系统 ==========
+function loadProgress() {
+  try {
+    const saved = localStorage.getItem('minesweeper_progress');
+    if (saved) {
+      const data = JSON.parse(saved);
+      unlockedLevel = data.unlockedLevel || 0;
+      levelStars = data.levelStars || {};
+    }
+  } catch(e) {}
+}
+
+function saveProgress() {
+  try {
+    localStorage.setItem('minesweeper_progress', JSON.stringify({
+      unlockedLevel,
+      levelStars
+    }));
+  } catch(e) {}
+  updateStartStats();
+}
+
+// ========== 关卡选择器 ==========
+function buildLevelSelector() {
+  levelSelectorEl.innerHTML = '';
+  for (let i = 0; i < LEVELS.length; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'level-btn';
+    if (i === currentLevelIndex) btn.classList.add('active');
+
+    const isUnlocked = i <= unlockedLevel;
+    if (!isUnlocked) btn.classList.add('locked');
+
+    const stars = levelStars[i] || 0;
+    const span = document.createElement('span');
+    span.textContent = (i + 1);
+    btn.appendChild(span);
+
+    if (stars > 0) {
+      const starRow = document.createElement('div');
+      starRow.className = 'star-row';
+      for (let s = 0; s < 3; s++) {
+        const star = document.createElement('span');
+        star.className = 'star' + (s < stars ? '' : ' empty');
+        star.textContent = '⭐';
+        starRow.appendChild(star);
+      }
+      btn.appendChild(starRow);
+    }
+
+    btn.title = isUnlocked
+      ? `第${i+1}关 - ${LEVELS[i].name}${stars > 0 ? ` (${'⭐'.repeat(stars)})` : ''}`
+      : `第${i+1}关 - 未解锁`;
+
+    if (isUnlocked) {
+      btn.addEventListener('click', () => {
+        SOUNDS.click();
+        currentLevelIndex = i;
+        nextLevelBtn.classList.remove('show');
+        resultModal.classList.remove('show');
+        initGame();
+      });
+    }
+
+    levelSelectorEl.appendChild(btn);
+  }
+}
+
+function updateLevelInfo() {
+  const level = LEVELS[currentLevelIndex];
+  levelInfoEl.textContent = `第 ${currentLevelIndex + 1} 关 · ${level.name} · ${level.rows}×${level.cols} · ${level.mines}雷`;
+}
+
+function updateProgressBar() {
+  const { rows, cols, mines } = LEVELS[currentLevelIndex];
+  let revealedCount = 0;
+  const total = rows * cols - mines;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (revealed[r][c] && board[r][c] !== -1) revealedCount++;
+    }
+  }
+  const pct = total > 0 ? (revealedCount / total * 100) : 0;
+  progressBar.style.width = pct + '%';
+}
+
+function pad3(n) {
+  n = Math.max(-99, Math.min(999, n));
+  if (n < 0) return '-' + String(Math.abs(n)).padStart(2, '0');
+  return String(n).padStart(3, '0');
+}
+
+function cloneState() {
+  return {
+    revealed: revealed.map(r => [...r]),
+    flagged: flagged.map(r => [...r]),
+    minesLeft, timer
+  };
+}
+
+function restoreState(state) {
+  revealed = state.revealed.map(r => [...r]);
+  flagged = state.flagged.map(r => [...r]);
+  minesLeft = state.minesLeft;
+  timer = state.timer;
+}
+
+// ========== 游戏初始化 ==========
+function initGame() {
+  const { rows, cols, mines } = LEVELS[currentLevelIndex];
+
+  board = Array(rows).fill(null).map(() => Array(cols).fill(0));
+  revealed = Array(rows).fill(null).map(() => Array(cols).fill(false));
+  flagged = Array(rows).fill(null).map(() => Array(cols).fill(false));
+  gameOver = false;
+  gameWon = false;
+  firstClick = true;
+  timer = 0;
+  minesLeft = mines;
+  undoCount = MAX_UNDO;
+  hintCount = MAX_HINT;
+  history = [];
+
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+
+  updateMineCounter();
+  updateTimer();
+  updatePowerUps();
+  updateProgressBar();
+  faceBtn.textContent = '🙂';
+  updateLevelInfo();
+  buildLevelSelector();
+  nextLevelBtn.classList.remove('show');
+  resultModal.classList.remove('show');
+
+  renderBoard();
+}
+
+function updatePowerUps() {
+  undoCountEl.textContent = undoCount;
+  hintCountEl.textContent = hintCount;
+  undoBtn.disabled = undoCount <= 0 || history.length === 0 || firstClick || gameOver;
+  hintBtn.disabled = hintCount <= 0 || firstClick || gameOver;
+}
+
+function placeMines(safeRow, safeCol) {
+  const { rows, cols, mines } = LEVELS[currentLevelIndex];
+  let placed = 0;
+
+  while (placed < mines) {
+    const r = Math.floor(Math.random() * rows);
+    const c = Math.floor(Math.random() * cols);
+    if (board[r][c] === -1) continue;
+    if (Math.abs(r - safeRow) <= 1 && Math.abs(c - safeCol) <= 1) continue;
+    board[r][c] = -1;
+    placed++;
+  }
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (board[r][c] === -1) continue;
+      let count = 0;
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const nr = r + dr, nc = c + dc;
+          if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && board[nr][nc] === -1) count++;
+        }
+      }
+      board[r][c] = count;
+    }
+  }
+}
+
+function renderBoard() {
+  const { rows, cols } = LEVELS[currentLevelIndex];
+  boardEl.style.gridTemplateColumns = `repeat(${cols}, 28px)`;
+  boardEl.innerHTML = '';
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      cell.style.animationDelay = `${(r + c) * 0.01}s`;
+
+      if (revealed[r][c]) {
+        cell.classList.add('revealed');
+        if (board[r][c] === -1) {
+          cell.classList.add('mine-icon');
+          if (gameOver && !gameWon) cell.classList.add('mine');
+        } else if (board[r][c] > 0) {
+          cell.textContent = board[r][c];
+          cell.classList.add('num-' + board[r][c]);
+        }
+      } else if (flagged[r][c]) {
+        cell.classList.add('flagged');
+        if (gameOver && !gameWon && board[r][c] !== -1) {
+          cell.classList.remove('flagged');
+          cell.classList.add('revealed', 'wrong-flag');
+        }
+      }
+
+      boardEl.appendChild(cell);
+    }
+  }
+}
+
+function saveHistory() {
+  if (history.length >= 10) history.shift();
+  history.push(cloneState());
+}
+
+function revealCell(r, c, saveHist = true) {
+  const { rows, cols } = LEVELS[currentLevelIndex];
+  if (r < 0 || r >= rows || c < 0 || c >= cols) return false;
+  if (revealed[r][c] || flagged[r][c]) return false;
+
+  if (saveHist) saveHistory();
+  revealed[r][c] = true;
+
+  if (board[r][c] === -1) {
+    SOUNDS.explode();
+    endGame(false);
+    return true;
+  }
+
+  if (board[r][c] === 0) {
+    SOUNDS.revealMulti();
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        revealCell(r + dr, c + dc, false);
+      }
+    }
+  } else {
+    SOUNDS.reveal();
+  }
+
+  checkWin();
+  return true;
+}
+
+function toggleFlag(r, c) {
+  if (revealed[r][c]) return;
+  saveHistory();
+  const wasFlagged = flagged[r][c];
+  flagged[r][c] = !flagged[r][c];
+  minesLeft += flagged[r][c] ? -1 : 1;
+  if (wasFlagged) {
+    SOUNDS.unflag();
+  } else {
+    SOUNDS.flag();
+  }
+  updateMineCounter();
+  updatePowerUps();
+  renderBoard();
+}
+
+function chordClick(r, c) {
+  if (!revealed[r][c] || board[r][c] <= 0) return;
+  const { rows, cols } = LEVELS[currentLevelIndex];
+  let flagCount = 0;
+
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && flagged[nr][nc]) flagCount++;
+    }
+  }
+
+  if (flagCount === board[r][c]) {
+    saveHistory();
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const nr = r + dr, nc = c + dc;
+        if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !flagged[nr][nc]) {
+          revealCell(nr, nc, false);
+          if (gameOver) return;
+        }
+      }
+    }
+    renderBoard();
+    updateProgressBar();
+    updatePowerUps();
+  }
+}
+
+function undo() {
+  if (undoCount <= 0 || history.length === 0 || gameOver) return;
+  SOUNDS.undo();
+  const prevState = history.pop();
+  restoreState(prevState);
+  undoCount--;
+  updateMineCounter();
+  updateTimer();
+  updatePowerUps();
+  updateProgressBar();
+  renderBoard();
+
+  const cells = boardEl.querySelectorAll('.cell');
+  cells.forEach(cell => {
+    const r = parseInt(cell.dataset.row);
+    const c = parseInt(cell.dataset.col);
+    if (!revealed[r][c] && !flagged[r][c]) {
+      cell.classList.add('undo-flash');
+      setTimeout(() => cell.classList.remove('undo-flash'), 500);
+    }
+  });
+}
+
+function hint() {
+  if (hintCount <= 0 || firstClick || gameOver) return;
+  const { rows, cols } = LEVELS[currentLevelIndex];
+  const candidates = [];
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (!revealed[r][c] && !flagged[r][c] && board[r][c] !== -1) {
+        candidates.push({ r, c });
+      }
+    }
+  }
+
+  if (candidates.length === 0) return;
+  const target = candidates[Math.floor(Math.random() * candidates.length)];
+  hintCount--;
+  SOUNDS.hint();
+  updatePowerUps();
+
+  const cell = boardEl.querySelector(`.cell[data-row="${target.r}"][data-col="${target.c}"]`);
+  if (cell) {
+    cell.classList.add('hint-flash');
+    setTimeout(() => cell.classList.remove('hint-flash'), 2400);
+  }
+}
+
+function checkWin() {
+  const { rows, cols, mines } = LEVELS[currentLevelIndex];
+  let revealedCount = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (revealed[r][c]) revealedCount++;
+    }
+  }
+  if (revealedCount === rows * cols - mines) {
+    endGame(true);
+  }
+}
+
+function calcStars(time) {
+  const level = LEVELS[currentLevelIndex];
+  if (time <= level.threeStar) return 3;
+  if (time <= level.twoStar) return 2;
+  return 1;
+}
+
+function showResultModal(won, stars, time) {
+  const level = LEVELS[currentLevelIndex];
+
+  if (won) {
+    resultTitle.textContent = '🎉 恭喜过关！';
+    resultTime.textContent = `用时: ${time} 秒`;
+    resultTarget.textContent = `⭐⭐⭐ ${level.threeStar}秒内 | ⭐⭐ ${level.twoStar}秒内`;
+
+    let starsHtml = '';
+    for (let i = 0; i < 3; i++) {
+      starsHtml += `<span class="star ${i < stars ? 'gold' : 'gray'}">⭐</span>`;
+    }
+    resultStars.innerHTML = starsHtml;
+
+    btnNext.style.display = currentLevelIndex < LEVELS.length - 1 ? 'inline-block' : 'none';
+    if (currentLevelIndex >= LEVELS.length - 1) {
+      resultTitle.textContent = '🏆 全部通关！';
+    }
+
+    createFireworks();
+  } else {
+    resultTitle.textContent = '💥 游戏结束';
+    resultStars.innerHTML = '<span style="font-size:2.5rem;">😵</span>';
+    resultTime.textContent = `用时: ${time} 秒`;
+    resultTarget.textContent = '别灰心，再试一次！';
+    btnNext.style.display = 'none';
+  }
+
+  resultModal.classList.add('show');
+}
+
+function endGame(won) {
+  gameOver = true;
+  gameWon = won;
+
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  faceBtn.textContent = won ? '😎' : '😵';
+
+  const { rows, cols } = LEVELS[currentLevelIndex];
+
+  if (won) {
+    SOUNDS.win();
+    const stars = calcStars(timer);
+    const prevStars = levelStars[currentLevelIndex] || 0;
+    if (stars > prevStars) {
+      levelStars[currentLevelIndex] = stars;
+    }
+    if (currentLevelIndex + 1 > unlockedLevel && currentLevelIndex + 1 < LEVELS.length) {
+      unlockedLevel = currentLevelIndex + 1;
+    }
+    saveProgress();
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (board[r][c] === -1 && !flagged[r][c]) {
+          flagged[r][c] = true;
+          minesLeft--;
+        }
+      }
+    }
+    updateMineCounter();
+    updateProgressBar();
+    buildLevelSelector();
+
+    if (currentLevelIndex < LEVELS.length - 1) {
+      nextLevelBtn.textContent = '🎉 下一关 →';
+      nextLevelBtn.classList.add('show');
+    } else {
+      nextLevelBtn.textContent = '🏆 恭喜通关全部关卡！';
+      nextLevelBtn.classList.add('show');
+    }
+
+    setTimeout(() => showResultModal(true, stars, timer), 400);
+  } else {
+    SOUNDS.lose();
+    gameContainer.classList.add('shake');
+    setTimeout(() => gameContainer.classList.remove('shake'), 500);
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (board[r][c] === -1) revealed[r][c] = true;
+      }
+    }
+
+    setTimeout(() => showResultModal(false, 0, timer), 500);
+  }
+
+  updatePowerUps();
+  renderBoard();
+}
+
+function startTimer() {
+  if (timerInterval) return;
+  timerInterval = setInterval(() => {
+    timer++;
+    updateTimer();
+  }, 1000);
+}
+
+function updateMineCounter() {
+  mineCounterEl.textContent = pad3(minesLeft);
+}
+
+function updateTimer() {
+  timerEl.textContent = pad3(timer);
+}
+
+function getCellFromEvent(e) {
+  const target = e.target.closest('.cell');
+  if (!target) return null;
+  return {
+    r: parseInt(target.dataset.row),
+    c: parseInt(target.dataset.col)
+  };
+}
+
+boardEl.addEventListener('click', (e) => {
+  if (gameOver) return;
+  const pos = getCellFromEvent(e);
+  if (!pos) return;
+
+  if (firstClick) {
+    placeMines(pos.r, pos.c);
+    firstClick = false;
+    startTimer();
+    updatePowerUps();
+  }
+
+  if (e.shiftKey || e.button === 2) return;
+
+  if (revealed[pos.r][pos.c]) {
+    chordClick(pos.r, pos.c);
+  } else {
+    revealCell(pos.r, pos.c);
+    renderBoard();
+    updateProgressBar();
+    updatePowerUps();
+  }
+});
+
+boardEl.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  if (gameOver) return;
+  const pos = getCellFromEvent(e);
+  if (!pos) return;
+  if (firstClick) return;
+  toggleFlag(pos.r, pos.c);
+});
+
+boardEl.addEventListener('mousedown', (e) => {
+  if (gameOver) return;
+  if (e.button === 0) {
+    const pos = getCellFromEvent(e);
+    if (pos && !revealed[pos.r][pos.c] && !flagged[pos.r][pos.c]) {
+      faceBtn.textContent = '😮';
+    }
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  if (!gameOver) faceBtn.textContent = '🙂';
+});
+
+faceBtn.addEventListener('click', () => {
+  SOUNDS.click();
+  initGame();
+});
+
+nextLevelBtn.addEventListener('click', () => {
+  if (currentLevelIndex < LEVELS.length - 1) {
+    SOUNDS.next();
+    currentLevelIndex++;
+    nextLevelBtn.classList.remove('show');
+    resultModal.classList.remove('show');
+    initGame();
+  }
+});
+
+undoBtn.addEventListener('click', undo);
+hintBtn.addEventListener('click', hint);
+
+btnRetry.addEventListener('click', () => {
+  SOUNDS.click();
+  resultModal.classList.remove('show');
+  initGame();
+});
+
+btnNext.addEventListener('click', () => {
+  if (currentLevelIndex < LEVELS.length - 1) {
+    SOUNDS.next();
+    currentLevelIndex++;
+    resultModal.classList.remove('show');
+    initGame();
+  }
+});
+
+resultModal.addEventListener('click', (e) => {
+  if (e.target === resultModal) {
+    resultModal.classList.remove('show');
+  }
+});
+
+// ========== 游戏规则弹窗 ==========
+const rulesModal = document.getElementById('rules-modal');
+const rulesBtn = document.getElementById('rules-btn');
+const rulesClose = document.getElementById('rules-close');
+const rulesConfirm = document.getElementById('rules-confirm');
+
+function showRules() {
+  SOUNDS.click();
+  rulesModal.classList.add('show');
+}
+
+function hideRules() {
+  SOUNDS.click();
+  rulesModal.classList.remove('show');
+}
+
+rulesBtn.addEventListener('click', showRules);
+rulesClose.addEventListener('click', hideRules);
+rulesConfirm.addEventListener('click', hideRules);
+rulesModal.addEventListener('click', (e) => {
+  if (e.target === rulesModal) {
+    hideRules();
+  }
+});
+
+// ========== 页面切换 ==========
+const startScreen = document.getElementById('start-screen');
+const gameScreen = document.getElementById('game-screen');
+const startBtn = document.getElementById('start-btn');
+const backBtn = document.getElementById('back-btn');
+const startStats = document.getElementById('start-stats');
+
+function updateStartStats() {
+  const unlocked = unlockedLevel + 1;
+  let totalStars = 0;
+  for (let i = 0; i < LEVELS.length; i++) {
+    totalStars += levelStars[i] || 0;
+  }
+  startStats.innerHTML = `已解锁 <span>${unlocked}</span> 关 · 共获得 <span>${totalStars}</span> 颗星`;
+}
+
+function showGameScreen() {
+  SOUNDS.start();
+  startScreen.style.display = 'none';
+  gameScreen.classList.add('active');
+  initGame();
+}
+
+function showStartScreen() {
+  SOUNDS.click();
+  gameScreen.classList.remove('active');
+  startScreen.style.display = 'flex';
+  resultModal.classList.remove('show');
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  updateStartStats();
+}
+
+startBtn.addEventListener('click', showGameScreen);
+backBtn.addEventListener('click', showStartScreen);
+
+// ========== 音量控制 ==========
+const audioToggle = document.getElementById('audio-toggle');
+function updateAudioBtn() {
+  if (audioEnabled) {
+    audioToggle.textContent = '🔊 音效';
+    audioToggle.classList.remove('muted');
+  } else {
+    audioToggle.textContent = '🔇 静音';
+    audioToggle.classList.add('muted');
+  }
+}
+updateAudioBtn();
+audioToggle.addEventListener('click', () => {
+  audioEnabled = !audioEnabled;
+  try { localStorage.setItem('minesweeper_audio', audioEnabled ? 'on' : 'off'); } catch(e) {}
+  updateAudioBtn();
+  if (audioEnabled) {
+    ensureAudio();
+    SOUNDS.click();
+  }
+});
+
+// ========== 启动 ==========
+createFloatingDecos();
+startSloganCarousel();
+loadProgress();
+updateStartStats();
+</script>
+</body>
+</html>
